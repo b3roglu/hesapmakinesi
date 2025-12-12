@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Hesap Makinesi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #e2e8f0;
+            --calc-bg: #0f172a;
+            --screen-bg: #1e293b;
+            --btn-dark: #334155;
+            --btn-dark-hover: #475569;
+            --btn-orange: #f97316;
+            --btn-orange-hover: #ea580c;
+            --btn-red: #dc2626;
+            --btn-blue: #2563eb;
+            --text-white: #f8fafc;
+            --text-gray: #94a3b8;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Taşmaları engelle */
+        }
+
+        /* Ana Kapsayıcı (Hesap Makinesi + Geçmiş Paneli) */
+        .wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            transition: all 0.4s ease;
+        }
+
+        /* --- HESAP MAKİNESİ GÖVDESİ --- */
+        .calculator {
+            background-color: var(--calc-bg);
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 340px;
+            transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Bilimsel Mod Genişliği */
+        .calculator.scientific { width: 520px; }
+
+        /* Üst Kontrol Barı */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+        
+        .header-title { font-size: 0.8rem; color: var(--text-gray); letter-spacing: 1px; font-weight: 600; text-transform: uppercase; }
+
+        .controls button {
+            background: none; border: none; color: var(--text-gray); cursor: pointer;
+            font-size: 1rem; margin-left: 10px; transition: 0.3s;
+            padding: 5px; border-radius: 5px;
+        }
+        .controls button:hover { color: white; background: rgba(255,255,255,0.1); }
+        .controls button.active { color: var(--btn-orange); }
+
+        /* Ekran */
+        .display-area {
+            background-color: var(--screen-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: right;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid transparent;
+            transition: border-color 0.3s;
+        }
+        .display-area:hover { border-color: rgba(255,255,255,0.1); }
+        .display-area:active { transform: scale(0.99); }
+
+        .prev-op { color: var(--text-gray); font-size: 0.9rem; min-height: 1.2rem; }
+        .curr-op { 
+            color: var(--text-white); font-size: 2.8rem; font-weight: 800; 
+            overflow-x: auto; white-space: nowrap; 
+        }
+        .curr-op::-webkit-scrollbar { display: none; }
+
+        /* Kopyalandı Bildirimi */
+        .toast {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(255, 165, 0, 0.9); color: white; padding: 5px 12px; border-radius: 20px;
+            font-size: 0.8rem; pointer-events: none; opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 600;
+        }
+        .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        /* Tuş Takımı */
+        .keys-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .calculator.scientific .keys-grid { grid-template-columns: repeat(6, 1fr); }
+
+        button.key {
+            height: 60px; border: none; border-radius: 14px; 
+            font-size: 1.2rem; font-weight: 700; color: white; cursor: pointer;
+            background-color: var(--btn-dark);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: all 0.1s;
+            user-select: none;
+        }
+        button.key:active { transform: translateY(4px); box-shadow: none; }
+        button.key:hover { filter: brightness(1.1); }
+
+        /* Tuş Renkleri */
+        .key.dark { background-color: var(--btn-dark); }
+        .key.orange { background-color: var(--btn-orange); }
+        .key.red { background-color: var(--btn-red); }
+        .key.blue { background-color: var(--btn-blue); }
+        .key.gray { background-color: #475569; }
+        
+        .span-two { grid-column: span 2; }
+
+        /* Bilimsel Tuşlar */
+        .sci-key { display: none; background-color: #475569; font-size: 1rem; }
+        .calculator.scientific .sci-key { display: block; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- GEÇMİŞ PANELİ --- */
+        .history-panel {
+            width: 0;
+            background-color: #1e293b;
+            border-radius: 0 24px 24px 0;
+            overflow: hidden;
+            transition: width 0.4s ease, padding 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            margin-left: -20px; /* Hesap makinesinin altına hafif girsin */
+            padding-left: 20px; /* İçerik kaymasın */
+            height: 580px; /* Hesap makinesiyle yaklaşık aynı boy */
+            box-shadow: 10px 0 20px rgba(0,0,0,0.2);
+        }
+
+        .history-panel.open {
+            width: 280px;
+            padding: 20px 20px 20px 40px; /* Sol taraftan hesap makinesine pay bırak */
+            margin-left: -25px; /* Birleşim yeri */
+        }
+
+        .history-header {
+            color: var(--text-gray); font-size: 0.9rem; font-weight: 600; 
+            margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px;
+            display: flex; justify-content: space-between;
+        }
+        
+        .clear-history { cursor: pointer; color: var(--btn-red); font-size: 0.8rem; }
+        .clear-history:hover { text-decoration: underline; }
+
+        .history-list {
+            flex: 1; overflow-y: auto; padding-right: 5px;
+        }
+        .history-list::-webkit-scrollbar { width: 5px; }
+        .history-list::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+
+        .history-item {
+            background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .history-item:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
+        .hist-exp { color: var(--text-gray); font-size: 0.8rem; margin-bottom: 2px; }
+        .hist-res { color: var(--btn-orange); font-size: 1.1rem; font-weight: bold; text-align: right; }
+
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="calculator" id="calculator">
+        <div class="header">
+            <div class="header-title">Pro Calc v3.0</div>
+            <div class="controls">
+                <button onclick="toggleSound()" id="btnSound" title="Ses"><i class="fas fa-volume-up"></i></button>
+                <button onclick="toggleScientific()" id="btnSci" title="Bilimsel Mod"><i class="fas fa-flask"></i></button>
+                <button onclick="toggleHistory()" id="btnHist" title="Geçmiş"><i class="fas fa-history"></i></button>
+            </div>
+        </div>
+
+        <div class="display-area" onclick="copyResult()">
+            <div class="prev-op" id="previous-operand"></div>
+            <div class="curr-op" id="current-operand">0</div>
+            <div class="toast" id="toast">Kopyalandı!</div>
+        </div>
+
+        <div class="keys-grid">
+            <button class="key sci-key" onclick="calcSci('sin')">sin</button>
+            <button class="key sci-key" onclick="calcSci('cos')">cos</button>
+            
+            <button class="key red span-two" onclick="clearAll()">C</button>
+            <button class="key gray" onclick="del()"><i class="fas fa-backspace"></i></button>
+            <button class="key orange" onclick="setOp('÷')">÷</button>
+
+            <button class="key sci-key" onclick="calcSci('tan')">tan</button>
+            <button class="key sci-key" onclick="calcSci('sqrt')">√</button>
+
+            <button class="key dark" onclick="append('7')">7</button>
+            <button class="key dark" onclick="append('8')">8</button>
+            <button class="key dark" onclick="append('9')">9</button>
+            <button class="key orange" onclick="setOp('×')">×</button>
+
+            <button class="key sci-key" onclick="calcSci('log')">log</button>
+            <button class="key sci-key" onclick="calcSci('pi')">π</button>
+
+            <button class="key dark" onclick="append('4')">4</button>
+            <button class="key dark" onclick="append('5')">5</button>
+            <button class="key dark" onclick="append('6')">6</button>
+            <button class="key orange" onclick="setOp('-')">-</button>
+
+            <button class="key sci-key" onclick="calcSci('pow')">x²</button>
+            <button class="key sci-key" onclick="calcSci('e')">e</button>
+
+            <button class="key dark" onclick="append('1')">1</button>
+            <button class="key dark" onclick="append('2')">2</button>
+            <button class="key dark" onclick="append('3')">3</button>
+            <button class="key orange" onclick="setOp('+')">+</button>
+
+            <button class="key sci-key" onclick="calcSci('(')">(</button>
+            <button class="key sci-key" onclick="calcSci(')')">)</button>
+
+            <button class="key dark span-two" onclick="append('0')">0</button>
+            <button class="key dark" onclick="append('.')">.</button>
+            <button class="key blue" onclick="compute()">=</button>
+        </div>
+    </div>
+
+    <div class="history-panel" id="historyPanel">
+        <div class="history-header">
+            <span>İŞLEM GEÇMİŞİ</span>
+            <span class="clear-history" onclick="clearHistory()">Temizle</span>
+        </div>
+        <div class="history-list" id="historyList">
+            <div style="text-align:center; padding-top:20px; color:#475569; font-size:0.8rem;">
+                Henüz işlem yok
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- STATE ---
+    let curr = '0';
+    let prev = '';
+    let op = undefined;
+    let soundOn = true;
+    let historyData = [];
+
+    // --- SES MOTORU (Web Audio API) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playClick() {
+        if (!soundOn) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        // Tok bir "Tık" sesi için frekans ayarları
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+        
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    // --- UI FONKSİYONLARI ---
+    function toggleSound() {
+        soundOn = !soundOn;
+        const btn = document.getElementById('btnSound');
+        btn.innerHTML = soundOn ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
+        btn.classList.toggle('active', soundOn);
+    }
+
+    function toggleScientific() {
+        document.getElementById('calculator').classList.toggle('scientific');
+        document.getElementById('btnSci').classList.toggle('active');
+    }
+
+    function toggleHistory() {
+        document.getElementById('historyPanel').classList.toggle('open');
+        document.getElementById('btnHist').classList.toggle('active');
+    }
+
+    function updateDisplay() {
+        document.getElementById('current-operand').innerText = formatNum(curr);
+        document.getElementById('previous-operand').innerText = op ? `${formatNum(prev)} ${op}` : '';
+    }
+
+    function formatNum(num) {
+        if (num === '') return '';
+        const str = num.toString();
+        const intPart = parseFloat(str.split('.')[0]);
+        const decPart = str.split('.')[1];
+        let displayInt;
+        
+        if (isNaN(intPart)) displayInt = '';
+        else displayInt = intPart.toLocaleString('tr-TR', { maximumFractionDigits: 0 });
+        
+        return decPart != null ? `${displayInt},${decPart}` : displayInt;
+    }
+
+    // --- HESAPLAMA MANTIĞI ---
+    function append(num) {
+        playClick();
+        if (num === '.' && curr.includes('.')) return;
+        if (curr === '0' && num !== '.') curr = num.toString();
+        else curr = curr.toString() + num.toString();
+        updateDisplay();
+    }
+
+    function setOp(operator) {
+        playClick();
+        if (curr === '') return;
+        if (prev !== '') compute();
+        op = operator;
+        prev = curr;
+        curr = '';
+        updateDisplay();
+    }
+
+    function calcSci(func) {
+        playClick();
+        let val = parseFloat(curr);
+        if (isNaN(val) && func !== 'pi' && func !== 'e') return;
+
+        let result;
+        switch(func) {
+            case 'sin': result = Math.sin(val); break;
+            case 'cos': result = Math.cos(val); break;
+            case 'tan': result = Math.tan(val); break;
+            case 'log': result = Math.log10(val); break;
+            case 'sqrt': result = Math.sqrt(val); break;
+            case 'pow': result = Math.pow(val, 2); break;
+            case 'pi': result = Math.PI; break;
+            case 'e': result = Math.E; break;
+            default: return;
+        }
+        
+        // Geçmişe ekle (Bilimsel işlem)
+        addToHistory(`${func}(${formatNum(curr)})`, result);
+        
+        curr = result;
+        updateDisplay();
+    }
+
+    function compute() {
+        playClick();
+        let computation;
+        const p = parseFloat(prev);
+        const c = parseFloat(curr);
+        if (isNaN(p) || isNaN(c)) return;
+
+        switch (op) {
+            case '+': computation = p + c; break;
+            case '-': computation = p - c; break;
+            case '×': computation = p * c; break;
+            case '÷': computation = p / c; break;
+            default: return;
+        }
+
+        // Geçmişe ekle
+        addToHistory(`${formatNum(prev)} ${op} ${formatNum(curr)}`, computation);
+
+        curr = computation;
+        op = undefined;
+        prev = '';
+        updateDisplay();
+    }
+
+    function clearAll() {
+        playClick();
+        curr = '0';
+        prev = '';
+        op = undefined;
+        updateDisplay();
+    }
+
+    function del() {
+        playClick();
+        curr = curr.toString().slice(0, -1);
+        if (curr === '') curr = '0';
+        updateDisplay();
+    }
+
+    // --- GEÇMİŞ YÖNETİMİ ---
+    function addToHistory(expression, result) {
+        const item = { exp: expression, res: result };
+        historyData.unshift(item); // En başa ekle
+        if (historyData.length > 20) historyData.pop(); // Son 20 işlem
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('historyList');
+        if (historyData.length === 0) {
+            list.innerHTML = '<div style="text-align:center; padding-top:20px; color:#475569; font-size:0.8rem;">Henüz işlem yok</div>';
+            return;
+        }
+        
+        let html = '';
+        historyData.forEach(item => {
+            // Sonuç sayı mı metin mi kontrol et (Hata durumları için)
+            let formattedRes = typeof item.res === 'number' ? formatNum(item.res) : item.res;
+            html += `
+                <div class="history-item" onclick="loadHistory('${item.res}')">
+                    <div class="hist-exp">${item.exp} =</div>
+                    <div class="hist-res">${formattedRes}</div>
+                </div>
+            `;
+        });
+        list.innerHTML = html;
+    }
+
+    function loadHistory(val) {
+        curr = val.toString();
+        updateDisplay();
+        // Mobilde paneli kapatabiliriz ama masaüstünde açık kalsın
+    }
+
+    function clearHistory() {
+        historyData = [];
+        renderHistory();
+    }
+
+    // --- KOPYALAMA ---
+    function copyResult() {
+        navigator.clipboard.writeText(curr).then(() => {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 1500);
+        });
+    }
+
+    // --- KLAVYE DESTEĞİ ---
+    document.addEventListener('keydown', (e) => {
+        if (e.key >= 0 && e.key <= 9) append(e.key);
+        if (e.key === '.') append('.');
+        if (e.key === '=' || e.key === 'Enter') compute();
+        if (e.key === 'Backspace') del();
+        if (e.key === 'Escape') clearAll();
+        if (e.key === '+' || e.key === '-') setOp(e.key);
+        if (e.key === '*') setOp('×');
+        if (e.key === '/') setOp('÷');
+    });
+
+</script>
+
+</body>
+</html>
