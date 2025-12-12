@@ -31,7 +31,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            overflow: hidden; /* Sayfa kaymasını engelle */
+            overflow: hidden; 
         }
 
         .wrapper {
@@ -39,6 +39,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            width: 100%;
         }
 
         /* --- HESAP MAKİNESİ GÖVDESİ --- */
@@ -50,54 +51,111 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.3);
             width: 340px;
             position: relative;
-            z-index: 20; /* Hesap makinesi her zaman en üstte */
+            z-index: 20; 
             transition: width 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Bilimsel Mod Genişliği */
         .calculator.scientific { width: 550px; }
 
-        /* --- GEÇMİŞ PANELİ (MASAÜSTÜ AYARLARI) --- */
+        /* --- GEÇMİŞ PANELİ (MASAÜSTÜ) --- */
         .history-panel {
             position: absolute;
-            top: 0;
-            right: 0; 
-            width: 300px;
-            height: 100%;
+            top: 0; right: 0; 
+            width: 300px; height: 100%;
             background-color: #1e293b;
             border-radius: 24px;
             border: 2px solid var(--border-orange);
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            z-index: 10; /* Hesap makinesinin arkasında */
-            
-            /* Animasyon Mantığı */
+            display: flex; flex-direction: column;
+            z-index: 10;
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
-            transform: translateX(0) scale(0.9); /* Başlangıçta makinenin arkasında */
+            transform: translateX(0) scale(0.9); 
             opacity: 0;
-            pointer-events: none; /* Kapalıyken tıklanamaz */
+            pointer-events: none;
         }
 
-        /* Panel AÇIKKEN (Masaüstü) */
         .history-panel.open {
-            transform: translateX(105%) scale(1); /* Sağa doğru kayar */
+            transform: translateX(105%) scale(1); 
             opacity: 1;
             pointer-events: all;
         }
 
-        /* --- DİĞER STİLLER (Header, Ekran, Tuşlar) --- */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .header-title { font-size: 0.8rem; color: var(--text-gray); font-weight: 600; letter-spacing: 1px; }
-        .controls button { background: none; border: none; color: var(--text-gray); cursor: pointer; font-size: 1.1rem; margin-left: 8px; padding: 8px; border-radius: 8px; transition: 0.3s; }
+        /* --- Header (Üst Kısım) Düzenlemeleri --- */
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            height: 40px; /* Yükseklik sabitlendi */
+            flex-wrap: nowrap; /* Mobilde aşağı kaymayı engeller */
+        }
+        
+        .header-title { 
+            font-size: 0.8rem; 
+            color: var(--text-gray); 
+            font-weight: 600; 
+            letter-spacing: 1px;
+            white-space: nowrap; /* Yazının alt satıra geçmesini engeller */
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .controls button { 
+            background: none; 
+            border: none; 
+            color: var(--text-gray); 
+            cursor: pointer; 
+            font-size: 1.1rem; 
+            margin-left: 5px; 
+            padding: 8px; 
+            border-radius: 8px; 
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .controls button.active { color: var(--border-orange); background: rgba(254, 152, 0, 0.1); }
 
-        .display-area { background-color: var(--screen-bg); border-radius: 16px; padding: 15px 20px; margin-bottom: 20px; text-align: right; height: 85px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #334155; }
-        .prev-op { color: var(--text-gray); font-size: 0.85rem; min-height: 1.2rem; }
-        .curr-op { color: var(--text-white); font-size: 2.5rem; font-weight: 800; overflow-x: auto; white-space: nowrap; }
+        /* --- Ekran Alanı Düzenlemeleri --- */
+        .display-area { 
+            background-color: var(--screen-bg); 
+            border-radius: 16px; 
+            padding: 15px 20px; 
+            margin-bottom: 20px; 
+            text-align: right; 
+            /* Yüksekliği artırdım */
+            height: 100px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-end; /* İçeriği alta yasla */
+            border: 1px solid #334155; 
+        }
+        
+        .prev-op { 
+            color: var(--text-gray); 
+            font-size: 0.85rem; 
+            min-height: 1.2rem; 
+            margin-bottom: 5px;
+        }
+        
+        .curr-op { 
+            color: var(--text-white); 
+            font-size: 2.8rem; /* Font biraz büyüdü */
+            font-weight: 800; 
+            overflow-x: auto; 
+            white-space: nowrap; 
+            line-height: 1.1; /* Satır yüksekliği ayarlandı, kesilmeyi önler */
+            padding-bottom: 5px; /* Alt boşluk */
+        }
         .curr-op::-webkit-scrollbar { display: none; }
 
-        .keys-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        /* --- Tuş Takımı --- */
+        .keys-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-grow: 1; }
         .calculator.scientific .keys-grid { grid-template-columns: repeat(6, 1fr); }
 
         button.key { height: 60px; border: none; border-radius: 14px; font-size: 1.3rem; font-weight: 700; color: white; cursor: pointer; background-color: var(--btn-dark); box-shadow: 0 4px 0 rgba(0,0,0,0.2); user-select: none; }
@@ -112,18 +170,15 @@
         .calculator.scientific .sci-key { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* --- Geçmiş Listesi --- */
         .history-header { color: var(--text-gray); font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #334155; }
         .history-list { flex: 1; overflow-y: auto; }
         .history-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
         .hist-res { color: var(--btn-orange); font-weight: bold; text-align: right; font-size: 1.1rem; }
 
-        /* --- MOBİL UYUMLULUK (Responsive) --- */
+        /* --- MOBİL UYUMLULUK --- */
         @media (max-width: 768px) {
-            body { 
-                align-items: flex-end; /* Mobilde aşağı hizala */
-                padding-bottom: 20px; 
-            }
-            
+            body { align-items: flex-end; padding-bottom: 20px; }
             .calculator { width: 95%; margin: 0 auto; margin-bottom: 20px; }
             .calculator.scientific { width: 95%; }
 
@@ -131,28 +186,17 @@
             button.key { height: 55px; font-size: 1.2rem; }
             .calculator.scientific button.key { height: 45px; font-size: 1rem; }
 
-            /* Mobilde Geçmiş Paneli (Alttan Çıkan Menü) */
             .history-panel {
-                position: fixed; /* Ekrana sabitle */
-                top: auto; 
-                right: 0; 
-                left: 0;
-                bottom: 0;
-                width: 100%; 
-                height: 60vh; /* Ekranın %60'ı */
+                position: fixed; top: auto; right: 0; left: 0; bottom: 0;
+                width: 100%; height: 60vh;
                 border-radius: 24px 24px 0 0;
-                z-index: 100; /* Her şeyin üstünde */
-                
-                /* Mobil Animasyon */
-                transform: translateY(100%); /* Aşağıda gizli */
+                z-index: 100;
+                transform: translateY(100%);
                 opacity: 1;
                 pointer-events: all;
                 box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
             }
-
-            .history-panel.open {
-                transform: translateY(0); /* Yukarı kayar */
-            }
+            .history-panel.open { transform: translateY(0); }
         }
     </style>
 </head>
@@ -241,12 +285,7 @@
 
     function toggleSound() { soundOn = !soundOn; document.getElementById('btnSound').classList.toggle('active'); }
     function toggleScientific() { document.getElementById('calculator').classList.toggle('scientific'); document.getElementById('btnSci').classList.toggle('active'); }
-    
-    // Geçmiş Paneli Aç/Kapa
-    function toggleHistory() { 
-        document.getElementById('historyPanel').classList.toggle('open'); 
-        document.getElementById('btnHist').classList.toggle('active'); 
-    }
+    function toggleHistory() { document.getElementById('historyPanel').classList.toggle('open'); document.getElementById('btnHist').classList.toggle('active'); }
 
     function updateDisplay() {
         document.getElementById('current-operand').innerText = Number(curr).toLocaleString('tr-TR', {maximumFractionDigits: 10});
@@ -304,10 +343,7 @@
     function loadHist(val) { 
         curr=val.toString(); 
         updateDisplay(); 
-        // Mobilde paneli kapat, masaüstünde açık kalabilir
-        if(window.innerWidth <= 768) {
-            toggleHistory();
-        }
+        if(window.innerWidth <= 768) { toggleHistory(); }
     }
 </script>
 </body>
